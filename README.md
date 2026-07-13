@@ -1,0 +1,1 @@
+# Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain
