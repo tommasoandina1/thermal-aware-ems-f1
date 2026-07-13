@@ -85,7 +85,7 @@ The rule-based controller schedules the MGU-K power fraction linearly on SoC dur
 ## Installation
 
 ```bash
-git clone https://github.com//thermal-aware-ems.git
+git clone https://github.com/tommasoandina1/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain
 cd thermal-aware-ems
 pip install -r requirements.txt
 ```

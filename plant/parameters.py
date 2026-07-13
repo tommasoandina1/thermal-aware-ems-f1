@@ -34,4 +34,12 @@ params = {
 
     'rho_a': 1.225,
     'g' : 9.81,
+
+    # Thermal model - battery
+    'c_p_cell': 900,              # [J/(kg*K)] specific heat, typical Li-ion cylindrical cell
+    'energy_density_Wh_per_kg': 220,  # [Wh/kg] reference high-power cell (order of magnitude of INR21700-48X)
+    'T_coolant_in': 50,            # [degC] coolant inlet temperature, assumed constant
+    'T_bat_safe_max': 60,          # [degC] steady-state safe operating ceiling used to size UA_eff
+    'T_bat_derate_start': 45,      # [degC] temperature above which power starts being derated
+    'T_bat_init': 40,              # [degC] initial battery temperature at simulation start
 }

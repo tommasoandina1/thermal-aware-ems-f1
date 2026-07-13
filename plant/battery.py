@@ -65,7 +65,7 @@ def Uoc(x, coef):
     poly = np.poly1d(coef)
     return poly(x)
 
-def battery_step(SoC_k, P2_k, coef, params,dt):
+def battery_step(SoC_k, P2_k, coef, Tbat_k,params,dt):
     """
     Battery state by one quasistatic timestep.
 
@@ -93,8 +93,8 @@ def battery_step(SoC_k, P2_k, coef, params,dt):
     R_int = params['R_int']
     Q_bat = params['E_pack_capacity'] /params['V_oc_nom'] 
     # Maximum physically deliverable discharge power at this SoC/R_int
-    
-    P2_max = Uoc_k**2 /(4*R_int)
+    derating = thermal_derating_factor(Tbat_k, params)
+    P2_max = Uoc_k**2 /(4*R_int)*derating
     if P2_k > P2_max:
         P2_k = P2_max
 
@@ -107,6 +107,36 @@ def battery_step(SoC_k, P2_k, coef, params,dt):
     SoC_next = np.clip(SoC_next, params['SoC_min'], params['SoC_max'])
     return SoC_next, U2_k, I2_k
 
+def thermal_model(I2_k, Tbat_k, params, dt):
+    R_int = params['R_int']
+    Q_dot_gen = R_int * I2_k**2  # Joule heating
+
+    m_pack_celle = (params['E_pack_capacity'] / 3600) / params['energy_density_Wh_per_kg']
+    C_th = m_pack_celle * params['c_p_cell']
+
+    I_max_sustained = params['P_MGU_max'] / params['V_oc_nom']  # corrente approssimativa al carico massimo
+    Q_gen_max = params['R_int'] * I_max_sustained**2
+    UA_0 = Q_gen_max / (params['T_bat_safe_max'] - params['T_coolant_in'])
+    Q_dot_cool =UA_0 * (Tbat_k - params['T_coolant_in'])
+
+    dT_bat = (Q_dot_gen - Q_dot_cool) / C_th
+    Tbat_next = Tbat_k +dT_bat * dt
+    return Tbat_next
+
+def thermal_derating_factor(Tbat_k, params):
+    """
+    Returns a multiplicative factor in [0, 1] applied to the battery's
+    maximum deliverable power, linearly derated between T_bat_derate_start
+    (factor = 1) and T_bat_safe_max (factor = 0).
+    """
+    T_start = params['T_bat_derate_start']
+    T_max = params['T_bat_safe_max']
+    if Tbat_k <= T_start:
+        return 1.0
+    elif Tbat_k >= T_max:
+        return 0.0
+    else:
+        return 1.0 - (Tbat_k - T_start) / (T_max - T_start)
 
 if __name__ == "__main__":
     # Calibration plot: single-cell curve, rescaled pack curve, and both
