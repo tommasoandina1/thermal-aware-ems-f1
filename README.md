@@ -45,8 +45,6 @@ The powertrain is modeled quasistatically (no fast electrical/thermal transients
  Knowledge of the future 
 |
  Status 
-|
-|
 ---
 |
 ---
