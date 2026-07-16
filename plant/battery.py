@@ -20,7 +20,7 @@ the MGU-K), P2 < 0 means the battery is charging (regenerative braking).
 
 import numpy as np
 import matplotlib.pyplot as plt
-from parameters import params
+from .parameters import params
 
 # ---------------------------------------------------------------------------
 # OCV(SoC) CURVE CALIBRATION

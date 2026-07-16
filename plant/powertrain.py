@@ -1,4 +1,5 @@
 import numpy as np
+from .parameters import params
 
 def mechanical_power(params,m_dot):
     eta_ICE = params['eta_ICE']

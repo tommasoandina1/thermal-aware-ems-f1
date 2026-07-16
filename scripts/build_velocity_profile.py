@@ -21,7 +21,7 @@ N = int(time[-1]/dt)
 t = np.arange(0, time[-1], dt)
 vel = tel['Speed'].values / 3.6  # km/h -> m/s
 v = np.interp(t, time, vel)
-a = savgol_filter(v, window_length=15, polyorder=3, deriv=1, delta=dt)
+a = savgol_filter(v, window_length=12, polyorder=3, deriv=1, delta=dt)
 
 np.save('data/Spanish_qualifying.npy', np.stack([t, v, a]))
 

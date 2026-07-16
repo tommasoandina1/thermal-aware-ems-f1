@@ -21,7 +21,7 @@ params = {
     'P_MGU_min': -200e3,# [W] recupero in frenata
     'eta_MGU': 0.93,    # [-]
 
-    # Batteria
+    # Battery
     'E_pack_capacity': 20e6,   # [J] capacità elettrochimica totale del pacco (~5.5kWh)
     'E_stint_max': 900e3,      # [J] vincolo regolamentare di scambio energetico per stint (se serve, tienilo distinto)
     'SoC_max': 0.9,
