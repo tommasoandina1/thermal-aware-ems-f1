@@ -1,3 +1,5 @@
+from .parameters import params
+
 def aero_drag(v, params):
     rho_a = params['rho_a']  # [kg/m^3]density of the ambient air
     Af = params['Af'] #[m] frontal area
