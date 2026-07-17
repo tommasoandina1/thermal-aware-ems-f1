@@ -10,10 +10,10 @@ params = {
 
     # ICE con turbo — Willans semplificato
     'P_ICE_max': 400e3, # [W] circa 680cv, limite LMDh
-    'eta_ICE': 0.38,    # [-] picco rendimento
+    'eta_ICE': 0.498,    # [-] picco rendimento
     'P_ICE0': 15e3,     # [W] drag power motore
     'LHV': 44e6,        # [J/kg] benzina
-    'm_dot_max': 75,            # [kg/h] Fuel flow max
+    'm_dot_max': 68.18, # [kg/h] Fuel flow max
     'eta_gearbox': 0.97,
 
     # MGU-K
