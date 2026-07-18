@@ -7,7 +7,7 @@ from scipy.signal import savgol_filter
 fastf1.Cache.enable_cache('./f1_cache')
 
 # load a session and its telemetry data
-session = fastf1.get_session(2025, 'Spanish Grand Prix', 'Q')
+session = fastf1.get_session(2026, 'Canada Grand Prix', 'Q')
 session.load()
 
 #Select the lap that we want to compare
@@ -23,7 +23,7 @@ vel = tel['Speed'].values / 3.6  # km/h -> m/s
 v = np.interp(t, time, vel)
 a = savgol_filter(v, window_length=12, polyorder=3, deriv=1, delta=dt)
 
-np.save('data/Spanish_qualifying.npy', np.stack([t, v, a]))
+np.save('data/Canada_qualifying.npy', np.stack([t, v, a]))
 
 
 fig, (ax1,ax2) = plt.subplots(2,1)

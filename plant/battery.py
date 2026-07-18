@@ -96,7 +96,7 @@ def battery_step(SoC_k, P2_k, coef, Tbat_k,params,dt):
     derating = thermal_derating_factor(Tbat_k, params)
     P2_max = Uoc_k**2 /(4*R_int)*derating
     if P2_k > P2_max:
-        P2_k = P2_max
+        P2_k =P2_max
 
     U2_k = (Uoc_k + np.sqrt(Uoc_k**2 -4 * P2_k * R_int))/2
     I2_k = P2_k / U2_k
@@ -117,7 +117,7 @@ def thermal_model(I2_k, Tbat_k, params, dt):
     I_max_sustained = params['P_MGU_max'] / params['V_oc_nom']  # corrente approssimativa al carico massimo
     Q_gen_max = params['R_int'] * I_max_sustained**2
     UA_0 = Q_gen_max / (params['T_bat_safe_max'] - params['T_coolant_in'])
-    Q_dot_cool =UA_0 * (Tbat_k - params['T_coolant_in'])
+    Q_dot_cool = UA_0 * (Tbat_k - params['T_coolant_in'])
 
     dT_bat = (Q_dot_gen - Q_dot_cool) / C_th
     Tbat_next = Tbat_k +dT_bat * dt
