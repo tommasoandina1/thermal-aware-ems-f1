@@ -96,7 +96,7 @@ def MGU_K(P_mech_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt):
 
     return P2, E_deploy_next, E_recharge_next
 
-def powertrain(P_gb_desired, u_split, E_deploy_acc_k, E_recharge_acc_k, params, dt):
+def powertrain(P_gb_desired, control, E_deploy_acc_k, E_recharge_acc_k, params, dt,control_mode='u_split'):
     """
     Powertrain plant model: splits the requested wheel/gearbox power between
     the ICE and the MGU-K according to the controller's split decision,
@@ -106,7 +106,7 @@ def powertrain(P_gb_desired, u_split, E_deploy_acc_k, E_recharge_acc_k, params, 
     Args:
         P_gb_desired (float): total mechanical power requested at the
             gearbox input [W], from vehicle_dynamics
-        u_split (float): fraction of P_gb_desired requested from the MGU-K,
+        control (float): fraction of P_gb_desired requested from the MGU-K,
             in [0, 1].
         E_deploy_acc_k (float): cumulative MGU-K deploy (boost) energy used
             so far [J]. State variable, passed in from the previous timestep.
@@ -137,10 +137,22 @@ def powertrain(P_gb_desired, u_split, E_deploy_acc_k, E_recharge_acc_k, params, 
     P_ICE0 = params['P_ICE0']
     LHV = params['LHV']
     m_dot_max_s = params['m_dot_max'] / 3600.0  # [kg/h] -> [kg/s]
+    eta_MGU = params['eta_MGU']
+
+    if control_mode == 'u_split':
+        P_mech_MGU_K_desired = control * P_gb_desired
+    elif control_mode == 'P2':
+        #control is a Electric Power
+        if control >0:
+            P_mech_MGU_K_desired = control * eta_ICE
+        elif control <0:
+            P_mech_MGU_K_desired = control / eta_ICE
+        else:
+            P_mech_MGU_K_desired = 0
+    
 
     # Apply the controller's split to the desired total power.
-    P_ICE_desired = (1 - u_split) * P_gb_desired
-    P_mech_MGU_K_desired = u_split * P_gb_desired
+    P_ICE_desired = P_gb_desired - P_mech_MGU_K_desired
 
     # Invert Willans to find the fuel mass flow needed for P_ICE_desired.
     m_dot = (P_ICE_desired + P_ICE0) / (eta_ICE * LHV)
@@ -157,7 +169,7 @@ def powertrain(P_gb_desired, u_split, E_deploy_acc_k, E_recharge_acc_k, params, 
     # The mechanical power actually delivered/absorbed by the MGU-K is
     # recovered from P2 using the same direction-dependent efficiency as
     # inside MGU_K (needed here only for the power balance/shortfall check).
-    eta_MGU = params['eta_MGU']
+
     if P2 > 0:
         P_mech_MGU_K_real = P2 * eta_MGU
     elif P2 < 0:
@@ -170,4 +182,4 @@ def powertrain(P_gb_desired, u_split, E_deploy_acc_k, E_recharge_acc_k, params, 
 
     shortfall = P_gb_desired - P_ICE_real - P_mech_MGU_K_real
 
-    return P_ICE_real, P2, P_mech_MGU_K_real, shortfall, E_deploy_next, E_recharge_next
+    return P_ICE_real, P2, P_mech_MGU_K_real, shortfall, E_deploy_next, E_recharge_next,m_dot
