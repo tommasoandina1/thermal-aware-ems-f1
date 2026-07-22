@@ -17,15 +17,15 @@ lap = session.laps.pick_fastest()
 tel = lap.get_telemetry()
 
 
-time = tel['Time'].dt.total_seconds().values # s 
+time = tel['Time'].dt.total_seconds().values # s
 dt = 0.1
 N = int(time[-1]/dt)
 t = np.arange(0, time[-1], dt)
-vel = tel['Speed'].values / 3.6  # km/h -> m/s
+vel = tel['Speed'].values / 3.6 # km/h -> m/s
 v = np.interp(t, time, vel)
 a = savgol_filter(v, window_length=12, polyorder=3, deriv=1, delta=dt)
 
-np.save('/app/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain/data/Canada_qualifying.npy', np.stack([t, v, a]))
+np.save('/app/data/qualifying_Canada/Canada_qualifying.npy', np.stack([t, v, a]))
 
 plt.figure(figsize=(12, 10), facecolor='w', edgecolor='k')
 plt.subplot(2,1,1)
@@ -39,7 +39,7 @@ plt.ylabel('Acceleration (m/s^2)',fontsize = 12)
 plt.xlabel('time (s)',fontsize = 12)
 
 plt.tight_layout()
-plt.savefig('/app/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain/profilo_qualifica.png')
+plt.savefig('/app/img/qualifying_profile.pdf')
 
 #MULTI LAPS
 # load a session and its telemetry data of race
@@ -72,8 +72,7 @@ for _, lap in laps_5.iterlaps():
 lap_interp[lap_interp == 0] = laps_5.iloc[-1]['LapNumber']
 
 
-
-np.save('/app/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain/data/Canada_5laps.npy', np.stack([t_5_lap,lap_interp, vel_5_lap, a_5_lap]))
+np.save('/app/data/multi_lap_Canada/Canada_5laps.npy', np.stack([t_5_lap,lap_interp, vel_5_lap, a_5_lap]))
 
 #Plot 5 lap
 plt.figure(figsize=(22, 12), facecolor='w', edgecolor='k')
@@ -89,7 +88,4 @@ plt.plot(t_5_lap, lap_interp, color='orange')
 plt.ylabel('Lap Number')
 plt.xlabel('Time (s)')
 plt.tight_layout()
-plt.savefig('/app/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain/multi_lap.png', dpi=300, bbox_inches='tight')
-
-
-
+plt.savefig('/app/img/multi_lap.pdf', dpi=300, bbox_inches='tight')

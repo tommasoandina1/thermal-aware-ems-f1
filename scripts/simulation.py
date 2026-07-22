@@ -7,7 +7,7 @@ from plant.parameters import params
 from controller.ruled_based import rule_based_split
 import matplotlib.pyplot as plot
 
-data = np.load('data/Canada_qualifying.npy')
+data = np.load('data/qualifying_Canada/Canada_qualifying.npy')
 
 t = data[0,:]
 v = data[1,:]
@@ -26,7 +26,7 @@ P_gb = np.zeros(len(v))
 for k in range(len(v)):
     F_x[k],Pm[k],P_gb[k] = longitudinal_dynamics(v[k],a[k],params)
 
-np.save('data/power_domand.npy',np.stack([Pm, P_gb]))
+np.save('data/qualifying_Canada/power_domand_quali.npy',np.stack([Pm, P_gb]))
 
 # #Battery of the car
 # SoC = np.zeros(N+1)
