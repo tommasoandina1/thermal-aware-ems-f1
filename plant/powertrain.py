@@ -144,9 +144,9 @@ def powertrain(P_gb_desired, control, E_deploy_acc_k, E_recharge_acc_k, params, 
     elif control_mode == 'P2':
         #control is a Electric Power
         if control >0:
-            P_mech_MGU_K_desired = control * eta_ICE
+            P_mech_MGU_K_desired = control * eta_MGU
         elif control <0:
-            P_mech_MGU_K_desired = control / eta_ICE
+            P_mech_MGU_K_desired = control / eta_MGU
         else:
             P_mech_MGU_K_desired = 0
     
