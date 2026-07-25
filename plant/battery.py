@@ -107,7 +107,7 @@ def battery_step(SoC_k, P2_k, coef, Tbat_k,params,dt):
     SoC_next = np.clip(SoC_next, params['SoC_min'], params['SoC_max'])
     return SoC_next, U2_k, I2_k
 
-def thermal_model(I2_k, Tbat_k, params, dt):
+def thermal_model(I2_k, Tbat_k, params, dt, cooling_factor=1.0):
     R_int = params['R_int']
     Q_dot_gen = R_int * I2_k**2  # Joule heating
 
@@ -116,7 +116,7 @@ def thermal_model(I2_k, Tbat_k, params, dt):
 
     I_max_sustained = params['P_MGU_max'] / params['V_oc_nom']  # corrente approssimativa al carico massimo
     Q_gen_max = params['R_int'] * I_max_sustained**2
-    UA_0 = Q_gen_max / (params['T_bat_safe_max'] - params['T_coolant_in'])
+    UA_0 = cooling_factor*Q_gen_max / (params['T_bat_safe_max'] - params['T_coolant_in'])
     Q_dot_cool = UA_0 * (Tbat_k - params['T_coolant_in'])
 
     dT_bat = (Q_dot_gen - Q_dot_cool) / C_th
