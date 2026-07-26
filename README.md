@@ -1,92 +1,50 @@
 # Thermal-Aware Energy Management System for a Hybrid Motorsport Powertrain
 
-A quasistatic simulation and control framework for the energy management strategy (EMS) of a hybrid motorsport powertrain (F1 2026 / LMDh-inspired), built from real qualifying telemetry. The project benchmarks a rule-based baseline against Equivalent Consumption Minimization Strategy (ECMS), Dynamic Programming (DP), and Reinforcement Learning (SAC) controllers for lap-time and energy-optimal power-split decisions.
+A quasistatic simulation and control framework for the energy management strategy (EMS) of a hybrid motorsport powertrain (F1 2026 / LMDh-inspired), built from real qualifying telemetry. The project benchmarks a rule-based baseline against Equivalent Consumption Minimization Strategy (ECMS) and Dynamic Programming (DP) controllers over a full 5-lap race, then extends the DP formulation to account for per-lap repeatability and thermal derating.
+
+## Key results
+
+- Identified and quantified a fuel-optimal but non-repeatable baseline SoC strategy: the DP fully depletes reserve within the first two laps, causing a measurable power shortfall in the closing laps of the race.
+- Corrected repeatability with an asymmetric soft constraint on end-of-lap SoC (one-sided hinge penalty), compared against a fixed-target and a lap-dependent floor across three variants.
+- Characterized when thermal derating becomes the binding constraint, via a parametric cooling-degradation stress test: 0 binding events at nominal cooling, rising to 581 events (mean shortfall 26.9 kW) at 30% cooling effectiveness.
+- Closed the loop between the DP policy and the thermal state through fixed-point iteration between `backward_process` and `thermal_model`, rather than a full 3D state reformulation, and made the tradeoff between the two approaches explicit.
 
 ## Motivation
 
-Modern hybrid power units (ICE + MGU-K + Energy Store) require a real-time strategy that decides, at every instant, how much power comes from the combustion engine versus the electric motor-generator. This project builds a physics-based plant model of the powertrain from first principles, validates it against a real qualifying lap, and uses it as a sandbox to compare energy management strategies of increasing sophistication — from simple heuristics to strategies that exploit full knowledge of the future velocity profile.
+Modern hybrid power units (ICE + MGU-K + Energy Store) require a real-time strategy that decides, at every instant, how much power comes from the combustion engine versus the electric motor-generator. This project builds a physics-based plant model of the powertrain from first principles, validates it against real qualifying telemetry, and uses it as a sandbox to compare energy management strategies of increasing sophistication, from simple heuristics to strategies that exploit full knowledge of the future velocity profile and of thermal constraints.
 
 ## Project structure
-
-```
-.
-├── data/
-│   └── spanish_qualifying.npy       # Resampled velocity/acceleration profile (fastf1)
-├── plant/
-│   ├── parameters.py                # Vehicle, ICE, MGU-K and battery parameters
-│   ├── vehicle_dynamics.py          # Longitudinal dynamics: aero drag, rolling resistance, power demand
-│   ├── battery.py                   # Quasistatic equivalent-circuit battery model (OCV + internal resistance)
-│   └── powertrain.py                # ICE (Willans line) + MGU-K + power-split bookkeeping
-├── control/
-│   ├── rule_based.py                # SoC-scheduled heuristic power-split baseline
-│   ├── ecms.py                      # Equivalent Consumption Minimization Strategy (planned)
-│   └── rl_agent/                    # Gymnasium environment + SAC agent (planned)
-├── scripts/
-│   ├── build_velocity_profile.py    # Loads fastf1 telemetry, resamples, filters, saves .npy
-│   └── run_simulation.py            # End-to-end lap simulation and plotting
-└── requirements.txt
-```
-
 ## Plant model
 
-The powertrain is modeled quasistatically (no fast electrical/thermal transients), following the modeling philosophy of Guzzella & Sciarretta, *Vehicle Propulsion Systems*, and validated against the convex formulation of Ebbesen et al. (2018), *Time-Optimal Control Strategies for a Hybrid Electric Race Car*, IEEE TCST.
+The powertrain is modeled quasistatically (no fast electrical transients), following the modeling philosophy of Guzzella & Sciarretta, *Vehicle Propulsion Systems*, and validated against the convex formulation of Ebbesen et al. (2018), *Time-Optimal Control Strategies for a Hybrid Electric Race Car*, IEEE TCST.
 
 - **Vehicle dynamics**: longitudinal force balance (aerodynamic drag, rolling resistance, inertia) converted to power demand at the gearbox, from a real velocity/acceleration profile extracted via [FastF1](https://github.com/theOehrly/Fast-F1) and Savitzky-Golay filtered to obtain a physically plausible acceleration signal.
-- **ICE**: affine Willans-line model (`P_e = eta_ICE * P_fuel - P_ICE0`), with a regulatory fuel-flow limit.
-- **MGU-K**: direction-dependent efficiency (motoring vs regeneration), instantaneous power limits, and a cumulative per-lap deploy energy budget (ES2K-style constraint), enforced as permanent saturation once exhausted.
+- **ICE**: affine Willans-line model (`P_e = eta_ICE * P_fuel - P_ICE0`), calibrated so that the fuel-flow-achievable ICE power matches the 400 kW regulatory cap, with a regulatory fuel-flow limit.
+- **MGU-K**: instantaneous power limits (`P_MGU_max`, `P_MGU_min`), a cumulative per-lap deploy energy budget (E_deploy_max, reset at every lap boundary), and a temperature-dependent derating factor on maximum discharge power.
 - **Battery**: single-branch equivalent-circuit model (open-circuit voltage in series with internal resistance), solved via the closed-form quadratic solution for terminal voltage, with Coulomb counting for SoC integration. The OCV(SoC) curve is calibrated from a reference high-power Li-ion cell (Samsung INR21700-48X, per Rukavina et al., 2023) and rescaled to the target pack voltage window, since proprietary real pack data is not publicly available.
+- **Thermal model**: lumped-capacitance battery temperature state driven by Joule heating (`I²R_int`) and convective cooling to a coolant at fixed inlet temperature, with a linear derating curve above a threshold temperature.
 - **Power-split shortfall**: the plant never silently compensates a saturated component with another; any gap between requested and deliverable power is reported explicitly, to be handled by the controller.
 
 ## Control strategies
 
-|
- Strategy 
-|
- Knowledge of the future 
-|
- Status 
----
-|
----
-|
----
-|
-|
- Rule-based (SoC-scheduled) 
-|
- None 
-|
- Implemented 
-|
-|
- ECMS 
-|
- None (online-representative) 
-|
- Planned 
-|
-|
- Dynamic Programming 
-|
- Full (benchmark / upper bound) 
-|
- Planned 
-|
-|
- RL (SAC) 
-|
- Learned policy, generalizable 
-|
- Planned 
-|
+| Strategy | Knowledge of the future | Status |
+|---|---|---|
+| Rule-based (SoC-scheduled) | None | Implemented |
+| ECMS | None (online-representative) | Implemented |
+| Dynamic Programming, single lap | Full (benchmark / upper bound) | Implemented |
+| Dynamic Programming, multi-lap + SoC soft constraint | Full | Implemented |
+| Dynamic Programming + thermal derating | Full, thermally aware | Implemented |
+| RL (SAC) | Learned policy, generalizable | Future work, deferred |
 
 The rule-based controller schedules the MGU-K power fraction linearly on SoC during traction and maximizes regeneration during braking, subject to the MGU-K's physical and regulatory limits. It serves as a baseline against which the optimization-based strategies are benchmarked.
+
+The multi-lap DP formulation deliberately keeps the backward pass simplified (no `R_int` losses in the stage cost) while the forward pass uses the full nonlinear plant, to quantify the model-plant mismatch as part of the validation. The soft constraint on end-of-lap SoC and the thermal derating bound are both surrogate corrections built on top of this same 2D grid, rather than promoting temperature to a third DP state, a design tradeoff made explicit in the notebooks and discussed further below.
 
 ## Installation
 
 ```bash
 git clone https://github.com/tommasoandina1/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain
-cd thermal-aware-ems
+cd Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain
 pip install -r requirements.txt
 ```
 
@@ -97,12 +55,22 @@ pip install -r requirements.txt
 python scripts/build_velocity_profile.py
 
 # 2. Run the end-to-end lap simulation
-python scripts/run_simulation.py
+python scripts/simulation.py
 ```
+
+<!-- TOMMASO: once you have the single "summary" notebook, link it here as the entry point for a reader who only wants the final results -->
 
 ## Status and scope
 
-This is an active portfolio project developed alongside a master's thesis in Mechatronics Engineering (Politecnico di Torino / University of Illinois Chicago). The current focus is the plant model and rule-based baseline; thermal modeling, ECMS, DP, and RL components are in progress. Known simplifications (documented in the code) include: no turbocharger sub-model, no engine-speed dependence (per the Willans-line simplification validated in Ebbesen et al.), and no hydraulic-brake energy dissipation model (reported as power shortfall instead).
+This is an active portfolio project developed alongside a master's thesis in Mechatronics Engineering (Politecnico di Torino). The plant model, rule-based, ECMS and DP controllers (single and multi-lap, with SoC repeatability and thermal derating) are complete; RL is deferred as future work pending time availability before the September 2026 deadline.
+
+Known simplifications, made explicit rather than hidden:
+
+- No turbocharger sub-model, no engine-speed dependence (per the Willans-line simplification validated in Ebbesen et al.).
+- No hydraulic-brake energy dissipation model (reported as power shortfall instead).
+- `P_MGU-K` is controlled in electrical terms in the DP/ECMS formulation (`eta_MGU = 1` approximation in the power balance), while the forward pass uses the real plant to quantify the resulting mismatch.
+- The thermal derating bound is enforced open-loop and corrected via fixed-point iteration between the DP policy and the thermal model, not via a full 3D state reformulation; this is a deliberate cost/accuracy tradeoff, discussed in `DP_with_TM.ipynb`.
+- `R_int` is treated as constant (not temperature-dependent); the OCV curve and thermal parameters are estimated from published reference data, not calibrated against a real pack, since proprietary data is unavailable.
 
 ## References
 
@@ -112,4 +80,4 @@ This is an active portfolio project developed alongside a master's thesis in Mec
 
 ## License
 
-This project is licensed under the MIT License — see [LICENSE](LICENSE) for details.
+This project is licensed under the MIT License, see [LICENSE](LICENSE) for details.
