@@ -1,0 +1,7 @@
+jupyter
+numpy
+pandas
+matplotlib
+fastf1
+pyyaml
+scipy
