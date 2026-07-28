@@ -4,50 +4,67 @@ from plant.vehicle_dynamics import aero_drag, rolling_resistance, longitudinal_d
 from plant.battery import battery_step, coef_cubic
 from plant.powertrain import powertrain
 from plant.parameters import params
-from controller.ruled_based import rule_based_split
-import matplotlib.pyplot as plot
+from controller.rule_based_controller import rule_based_split
+import matplotlib.pyplot as plt
 
-data = np.load('data/qualifying_Canada/Canada_qualifying.npy')
 
-t = data[0,:]
-v = data[1,:]
-a = data[2,:]
+data_quali = np.load('data/qualifying_Canada/Canada_qualifying.npy')
 
-dt = 0.1 #simulation time
-N = int(t[-1]/dt)
+t = data_quali[0,:]
+v = data_quali[1,:]
+a = data_quali[2,:]
 
-#Dynamics of the car
+
+
+#Dynamics of the car for quali
 F_aero = np.array(aero_drag(v,params))
 F_rolling = rolling_resistance(params) * np.ones(len(v))
 F_x  = np.zeros(len(v))
 Pm = np.zeros(len(v))
 P_gb = np.zeros(len(v))
 
+
 for k in range(len(v)):
     F_x[k],Pm[k],P_gb[k] = longitudinal_dynamics(v[k],a[k],params)
 
 np.save('data/qualifying_Canada/power_domand_quali.npy',np.stack([Pm, P_gb]))
 
-# #Battery of the car
-# SoC = np.zeros(N+1)
-# SoC[0] = 0.9
+## 5 laps
+data_5_laps = np.load('data/multi_lap_Canada/Canada_5laps.npy')
 
-# E_deploy = np.zeros(N+1)
-# E_deploy[0] = 0
-# E_recharge = np.zeros(N+1)
-# E_recharge[0] = 0
+t_5_lap= data_5_laps[0,:]
+lap_interp= data_5_laps[1,:]
+vel_5_lap=  data_5_laps[2,:]
+a_5_lap =  data_5_laps[3,:]
 
-# P_ICE_real = np.zeros(N+1)
-# P2 = np.zeros(N+1)
-# P_mech_MGU_K_real = np.zeros(N+1)
-# P2_k = np.zeros(N+1)
-# shortfall = np.zeros(N+1)
-# u_split = np.zeros(N+1)
-# U2 = np.zeros(N+1)
-# U2[0] = 300
 
-# I2= np.zeros(N+1)
-# for k in range(N):
-#     u_split[k] = rule_based_split(SoC[k],P_gb[k],E_deploy[k],params)
-#     P_ICE_real[k+1], P2[k+1], P_mech_MGU_K_real[k+1], shortfall[k+1], E_deploy[k+1], E_recharge[k+1] = powertrain(P_gb[k], u_split[k], E_deploy[k], E_recharge[k], params, dt) 
-#     SoC[k+1], U2[k+1], I2[k+1] = battery_step(SoC[k], P2[k+1], coef_cubic, params,dt)
+#Dynamics of the car for 5 laps
+F_aero_5_laps = np.array(aero_drag(vel_5_lap,params))
+F_rolling_5_laps = rolling_resistance(params) * np.ones(len(vel_5_lap))
+F_x_5_laps  = np.zeros(len(vel_5_lap))
+Pm_5_laps = np.zeros(len(vel_5_lap))
+P_gb_5_laps = np.zeros(len(vel_5_lap))
+
+for k in range(len(vel_5_lap)):
+    F_x_5_laps[k],Pm_5_laps[k],P_gb_5_laps[k] = longitudinal_dynamics(vel_5_lap[k],a_5_lap[k],params)
+
+np.save('data/qualifying_Canada/power_domand_mulilap.npy',np.stack([Pm_5_laps, P_gb_5_laps]))
+
+
+
+#Plot 5 lap
+plt.figure(figsize=(22, 12), facecolor='w', edgecolor='k')
+plt.subplot(2,1,1)
+plt.plot(t, P_gb, )
+plt.ylabel('Power (W)',fontsize = 16)
+plt.xlabel('Time (s)',fontsize = 16)
+plt.title('Power Domand at Gearbox for the quali',fontsize = 16)
+
+
+plt.subplot(2,1,2)
+plt.plot(t_5_lap, P_gb_5_laps)
+plt.ylabel('Power (W)',fontsize = 16)
+plt.xlabel('Time (s)',fontsize = 16)
+plt.tight_layout()
+plt.title('Power Domand at Gearbox for 5 laps',fontsize = 16)
+plt.savefig('/app/img/multi_lap_powerdomand.png', dpi=300, bbox_inches='tight')

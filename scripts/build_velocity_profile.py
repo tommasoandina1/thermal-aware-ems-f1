@@ -30,16 +30,16 @@ np.save('/app/data/qualifying_Canada/Canada_qualifying.npy', np.stack([t, v, a])
 plt.figure(figsize=(12, 10), facecolor='w', edgecolor='k')
 plt.subplot(2,1,1)
 plt.plot(t,v)
-plt.ylabel('Velocity (m/s)',fontsize = 12)
-plt.xlabel('time (s)',fontsize = 12)
+plt.ylabel('Velocity (m/s)',fontsize = 14)
+plt.xlabel('time (s)',fontsize = 14)
 
 plt.subplot(2,1,2)
 plt.plot(t,a)
-plt.ylabel('Acceleration (m/s^2)',fontsize = 12)
-plt.xlabel('time (s)',fontsize = 12)
+plt.ylabel('Acceleration (m/s^2)',fontsize = 14)
+plt.xlabel('time (s)',fontsize = 14)
 
 plt.tight_layout()
-plt.savefig('/app/img/qualifying_profile.pdf')
+plt.savefig('/app/img/qualifying_profile.png')
 
 #MULTI LAPS
 # load a session and its telemetry data of race
@@ -71,21 +71,20 @@ for _, lap in laps_5.iterlaps():
 
 lap_interp[lap_interp == 0] = laps_5.iloc[-1]['LapNumber']
 
-
 np.save('/app/data/multi_lap_Canada/Canada_5laps.npy', np.stack([t_5_lap,lap_interp, vel_5_lap, a_5_lap]))
 
 #Plot 5 lap
 plt.figure(figsize=(22, 12), facecolor='w', edgecolor='k')
 plt.subplot(2,1,1)
-plt.plot(t_5_lap, vel_5_lap)
-plt.ylabel('Velocity (m/s)')
-plt.xlabel('Time (s)')
-plt.title('Velocity Profile - 5 consecutive laps ')
+plt.plot(t_5_lap, vel_5_lap, )
+plt.ylabel('Velocity (m/s)',fontsize = 16)
+plt.xlabel('Time (s)',fontsize = 16)
+plt.title('Velocity Profile - 5 consecutive laps')
 
 
 plt.subplot(2,1,2)
 plt.plot(t_5_lap, lap_interp, color='orange')
-plt.ylabel('Lap Number')
-plt.xlabel('Time (s)')
+plt.ylabel('Lap Number',fontsize = 16)
+plt.xlabel('Time (s)',fontsize = 16)
 plt.tight_layout()
-plt.savefig('/app/img/multi_lap.pdf', dpi=300, bbox_inches='tight')
+plt.savefig('/app/img/multi_lap.png', dpi=300, bbox_inches='tight')
