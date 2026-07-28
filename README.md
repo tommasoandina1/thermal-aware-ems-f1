@@ -14,6 +14,35 @@ A quasistatic simulation and control framework for the energy management strateg
 Modern hybrid power units (ICE + MGU-K + Energy Store) require a real-time strategy that decides, at every instant, how much power comes from the combustion engine versus the electric motor-generator. This project builds a physics-based plant model of the powertrain from first principles, validates it against real qualifying telemetry, and uses it as a sandbox to compare energy management strategies of increasing sophistication, from simple heuristics to strategies that exploit full knowledge of the future velocity profile and of thermal constraints.
 
 ## Project structure
+
+```
+.
+├── controller/
+│   ├── 01_single_lap_DP.ipynb            # single-lap fuel-optimal DP (benchmark)
+│   ├── 01b_single_lap_DP_vectorized.ipynb# vectorized rewrite, same result as 01
+│   ├── 02_ECMS.ipynb                     # online-representative ECMS controller
+│   ├── 03_multi_lap_DP.ipynb             # 5-lap DP + SoC repeatability constraint
+│   ├── 04_multi_lap_DP_thermal.ipynb     # + thermal derating, fixed-point self-consistency
+│   ├── Summary_of_Results.ipynb          # condensed results, start here
+│   ├── rule_based_controller.py          # SoC-scheduled heuristic baseline
+│   └── README.md                         # per-notebook status, results, limitations
+├── plant/
+│   ├── parameters.py                     # vehicle, ICE, MGU-K, battery parameters
+│   ├── vehicle_dynamics.py               # longitudinal dynamics, power demand
+│   ├── battery.py                        # equivalent-circuit battery + thermal model
+│   └── powertrain.py                     # ICE (Willans line) + MGU-K + power-split bookkeeping
+├── scripts/
+│   ├── build_velocity_profile.py         # loads FastF1 telemetry, resamples, saves .npy
+│   └── simulation.py                     # builds the gearbox power-demand array
+├── data/
+│   ├── qualifying_Canada/                # single-lap DP inputs/outputs (Canada 2026 quali)
+│   ├── multi_lap_Canada/                 # synthetic 5-lap profile + battery temperature
+│   └── results/                          # exported .npz feeding Summary_of_Results.ipynb
+├── img/                                  # exported plots (qualifying and multi-lap profiles)
+├── Compare_Controllers.ipynb             # head-to-head: rule-based vs ECMS vs DP
+└── requirements.txt
+```
+
 ## Plant model
 
 The powertrain is modeled quasistatically (no fast electrical transients), following the modeling philosophy of Guzzella & Sciarretta, *Vehicle Propulsion Systems*, and validated against the convex formulation of Ebbesen et al. (2018), *Time-Optimal Control Strategies for a Hybrid Electric Race Car*, IEEE TCST.
@@ -54,11 +83,15 @@ pip install -r requirements.txt
 # 1. Build the velocity/acceleration profile from telemetry
 python scripts/build_velocity_profile.py
 
-# 2. Run the end-to-end lap simulation
+# 2. Build the gearbox power-demand array
 python scripts/simulation.py
 ```
 
-<!-- TOMMASO: once you have the single "summary" notebook, link it here as the entry point for a reader who only wants the final results -->
+For the full controller comparison, run the notebooks in `controller/` (see
+`controller/README.md` for the recommended reading order), or open
+`Compare_Controllers.ipynb` for the rule-based vs ECMS vs DP head-to-head.
+Readers who only want the final results should start with
+[`controller/Summary_of_Results.ipynb`](controller/Summary_of_Results.ipynb).
 
 ## Status and scope
 
@@ -69,7 +102,7 @@ Known simplifications, made explicit rather than hidden:
 - No turbocharger sub-model, no engine-speed dependence (per the Willans-line simplification validated in Ebbesen et al.).
 - No hydraulic-brake energy dissipation model (reported as power shortfall instead).
 - `P_MGU-K` is controlled in electrical terms in the DP/ECMS formulation (`eta_MGU = 1` approximation in the power balance), while the forward pass uses the real plant to quantify the resulting mismatch.
-- The thermal derating bound is enforced open-loop and corrected via fixed-point iteration between the DP policy and the thermal model, not via a full 3D state reformulation; this is a deliberate cost/accuracy tradeoff, discussed in `DP_with_TM.ipynb`.
+- The thermal derating bound is enforced open-loop and corrected via fixed-point iteration between the DP policy and the thermal model, not via a full 3D state reformulation; this is a deliberate cost/accuracy tradeoff, discussed in `controller/04_multi_lap_DP_thermal.ipynb`.
 - `R_int` is treated as constant (not temperature-dependent); the OCV curve and thermal parameters are estimated from published reference data, not calibrated against a real pack, since proprietary data is unavailable.
 
 ## References
