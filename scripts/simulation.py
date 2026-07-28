@@ -48,7 +48,7 @@ P_gb_5_laps = np.zeros(len(vel_5_lap))
 for k in range(len(vel_5_lap)):
     F_x_5_laps[k],Pm_5_laps[k],P_gb_5_laps[k] = longitudinal_dynamics(vel_5_lap[k],a_5_lap[k],params)
 
-np.save('data/qualifying_Canada/power_domand_mulilap.npy',np.stack([Pm_5_laps, P_gb_5_laps]))
+np.save('data/multi_lap_Canada/power_domand_multilap.npy',np.stack([Pm_5_laps, P_gb_5_laps]))
 
 
 
