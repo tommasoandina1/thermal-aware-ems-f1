@@ -2,7 +2,7 @@ import numpy as np
 import fastf1
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter
-from scipy.interpolate import interp1d
+from scipy.interpolate import UnivariateSpline
 import os
 
 os.makedirs('./f1_cache', exist_ok=True)
@@ -22,16 +22,20 @@ dt = 0.1
 N = int(time[-1]/dt)
 t = np.arange(0, time[-1], dt)
 vel = tel['Speed'].values / 3.6 # km/h -> m/s
-v = np.interp(t, time, vel)
-a = savgol_filter(v, window_length=12, polyorder=3, deriv=1, delta=dt)
+spl = UnivariateSpline(time, vel, k=4, s=len(time))   # fit on (time, vel) raw
+v = spl(t)                                                 
+a = spl.derivative()(t)
+
 
 np.save('/app/data/qualifying_Canada/Canada_qualifying.npy', np.stack([t, v, a]))
 
 plt.figure(figsize=(12, 10), facecolor='w', edgecolor='k')
 plt.subplot(2,1,1)
-plt.plot(t,v)
+plt.plot(t,v, label ='spline trajectory' )
+plt.plot(time,vel, label ='fast f1')
 plt.ylabel('Velocity (m/s)',fontsize = 14)
 plt.xlabel('time (s)',fontsize = 14)
+plt.legend(loc=1, fontsize=12)
 
 plt.subplot(2,1,2)
 plt.plot(t,a)
@@ -55,9 +59,11 @@ dt = 0.1
 t_5_lap = np.arange(0, time_continuous[-1], dt)
 
 vel_5 = telemetry_5['Speed'].values / 3.6
-vel_5_lap = np.interp(t_5_lap, time_continuous, vel_5)
+spl_5_lap = UnivariateSpline(time_continuous, vel_5, k=4, s=len(time_continuous))
+vel_5_lap = spl_5_lap(t_5_lap)                                                 
+a_5_lap = spl_5_lap.derivative()(t_5_lap) 
 
-a_5_lap = savgol_filter(vel_5_lap, window_length=12, polyorder=3, deriv=1, delta=dt)
+
 
 lap_interp = np.zeros_like(t_5_lap)
 t_actual = 0.0
