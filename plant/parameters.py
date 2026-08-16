@@ -1,45 +1,43 @@
-#Technical Regulations for LMDh Prototype
+# Technical regulations: F1 2026 power unit envelope
 
 params = {
-    # Veicolo
-    'mv': 730,          # [kg] peso minimo LMDh con pilota
-    'Cd': 0.7,          # [-] stima prototipo chiuso
-    'Af': 1.2,          # [m^2]
+    # Vehicle
+    'mv': 768,          # [kg] 2026 minimum weight, car + driver, without fuel
+    'Cd': 0.7,          # [-] estimate, Z-mode (active aero not modeled)
+    'Af': 1.5,          # [m^2] estimate, 1.9 m car width
     'Cr': 0.01,         # [-]
-    'r_wheel': 0.33,    # [m]
 
-    # ICE con turbo — Willans semplificato
-    'P_ICE_max': 400e3, # [W] 
-    'eta_ICE': 0.498,    # [-] picco rendimento
-    'P_ICE0': 15e3,     # [W] drag power engine
+    # ICE (1.6L V6 turbo) - simplified Willans line
+    'P_ICE_max': 400e3, # [W] 2026 ICE output
+    'eta_ICE': 0.498,    # [-] peak efficiency
+    'P_ICE0': 15e3,     # [W] engine drag power
     'LHV': 44e6,        # [J/kg]
-    'm_dot_max': 68.18, # [kg/h] Fuel flow max
+    'm_dot_max': 68.18, # [kg/h] = 3000 MJ/h fuel energy flow limit / LHV
     'eta_gearbox': 0.97,
 
     # MGU-K
-    'P_MGU_max': 350e3, # [W] limite regolamento F1
-    'P_MGU_min': -200e3,# [W] recupero in frenata
+    'P_MGU_max': 350e3, # [W] 2026 ERS-K electrical DC power limit
+    'P_MGU_min': -350e3,# [W] recovery, same ceiling as deploy
     'eta_MGU': 0.93,    # [-]
 
-    # Battery
-    'E_pack_capacity': 20e6,   # [J] capacità elettrochimica totale del pacco (~5.5kWh)
-    'E_stint_max': 900e3,      # [J] vincolo regolamentare di scambio energetico per stint (se serve, tienilo distinto)
+    # Energy Store
+    'E_pack_capacity': 5.7e6,  # [J] sized so (SoC_max - SoC_min) gives ~4 MJ usable
     'SoC_max': 0.9,
     'SoC_min': 0.2,
     'R_int': 0.01,      # [Ohm]
-    'V_oc_nom': 300,    # [V] tensione nominale
+    'V_oc_nom': 300,    # [V] nominal pack voltage
 
-    # Vincoli stint
-    'E_deploy_max': 9e6,  # [J] energia deployment per giro
+    # Per-lap energy limits
+    'E_deploy_max': 9e6,  # [J] max ES->K energy per lap (HV DC bus)
 
     'rho_a': 1.225,
-    'g' : 9.81,
+    'g': 9.81,
 
     # Thermal model - battery
-    'c_p_cell': 900,              # [J/(kg*K)] specific heat, typical Li-ion cylindrical cell
-    'energy_density_Wh_per_kg': 220,  # [Wh/kg] reference high-power cell (order of magnitude of INR21700-48X)
-    'T_coolant_in': 50,            # [degC] coolant inlet temperature, assumed constant
-    'T_bat_safe_max': 60,          # [degC] steady-state safe operating ceiling used to size UA_eff
-    'T_bat_derate_start': 45,      # [degC] temperature above which power starts being derated
-    'T_bat_init': 40,              # [degC] initial battery temperature at simulation start
+    'c_p_cell': 900,
+    'energy_density_Wh_per_kg': 220,
+    'T_coolant_in': 50,
+    'T_bat_safe_max': 60,
+    'T_bat_derate_start': 45,
+    'T_bat_init': 40,
 }
