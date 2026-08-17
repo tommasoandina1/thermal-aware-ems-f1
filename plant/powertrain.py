@@ -57,9 +57,6 @@ def MGU_K(P_mech_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt):
     P_MGU_min = params['P_MGU_min']
     E_deploy_max = params['E_deploy_max']
     eta_MGU = params['eta_MGU']
-
-    # Saturate the requested power to the MGU-K's instantaneous physical limits.
-    P_mech_desired = np.clip(P_mech_desired, P_MGU_min, P_MGU_max)
     
 
     # If the lap's deploy budget is already exhausted, no further boosting
@@ -70,11 +67,11 @@ def MGU_K(P_mech_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt):
     
     # Convert mechanical power to electrical power, direction-dependent
     if P_mech_desired > 0:
-        P2 = P_mech_desired/eta_MGU
+        P2 = min(P_mech_desired/eta_MGU,P_MGU_max)
         dE_deploy = P2 * dt
         dE_recharge = 0
     elif P_mech_desired < 0:
-        P2 = P_mech_desired*eta_MGU
+        P2 = max(P_mech_desired*eta_MGU,P_MGU_min)
         dE_deploy = 0
         dE_recharge = - P2 * dt #positive magnitude of energy recovered
     else:

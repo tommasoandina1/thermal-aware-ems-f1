@@ -8,12 +8,6 @@ between `u_min` and `u_max`, then scaled down as the per-lap deploy budget
 (E_ES2K) is used up. During braking (P_gb_desired < 0), full regeneration
 is requested (u_split = 1.0), subject to the plant's own physical limits.
 
-Known declared limitation: the linear SoC schedule's direction (u_min at
-SoC_min, u_max at SoC_max) has not been independently re-derived/validated
-against a target deployment strategy -- it is used as-is as the baseline
-heuristic and not tuned further, since the point of this controller is to
-be a simple, non-optimized reference rather than a competitive strategy.
-
 Inputs:
     SoC_k           -- current state of charge [-]
     P_gb_desired    -- power requested at the gearbox [W]
@@ -38,7 +32,7 @@ def rule_based_split(SoC_k, P_gb_desired, E_deploy_acc_k, params):
         return 1.0
 
     u_min = 0.05
-    u_max = 0.3
+    u_max = 0.6
     SoC_clipped = np.clip(SoC_k, SoC_min, SoC_max)
     m = (u_max - u_min) / (SoC_max - SoC_min)
     q = u_min - m * SoC_min
