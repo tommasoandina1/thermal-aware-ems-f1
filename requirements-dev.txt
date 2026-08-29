@@ -1,0 +1,4 @@
+# Notebooks, telemetry acquisition, tests.
+jupyter
+fastf1
+pytest>=7.0

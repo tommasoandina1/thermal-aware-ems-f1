@@ -1,0 +1,5 @@
+# Reinforcement learning layer (rl/).
+# NOTE: torch is installed separately in the Dockerfile so that the CPU-only
+# wheel index can be used. Do not add it here, or pip will resolve the CUDA
+# build from PyPI (~4 GB of nvidia-* packages for two 256x256 MLPs).
+gymnasium>=0.29

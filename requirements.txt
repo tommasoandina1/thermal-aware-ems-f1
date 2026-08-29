@@ -1,7 +1,7 @@
-jupyter
+# Core plant + analysis. Everything the plant model and the notebooks need to
+# run, excluding telemetry acquisition and the RL layer.
 numpy
+scipy
 pandas
 matplotlib
-fastf1
 pyyaml
-scipy
