@@ -1,5 +1,6 @@
 import numpy as np
 from .parameters import params
+from .battery import thermal_derating_factor
 
 def mechanical_power(params,m_dot):
     eta_ICE = params['eta_ICE']
@@ -18,7 +19,8 @@ def mechanical_power(params,m_dot):
     
 
 
-def MGU_K(P_mech_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt):
+def MGU_K(P_mech_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt,
+          Tbat_k=None):
     """
     MGU-K component model: converts a desired mechanical power (from the
     power-split controller) into the corresponding electrical power P2 seen
@@ -44,6 +46,14 @@ def MGU_K(P_mech_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt):
         params (dict): must contain 'P_MGU_max' [W], 'P_MGU_min' [W]
             (negative), 'E_deploy_max' [J], 'eta_MGU' [-].
         dt (float): timestep duration [s].
+        Tbat_k (float or None): battery temperature [degC]. When given, the
+            deploy ceiling is derated linearly above T_bat_derate_start:
+                P_MGU_max_eff = P_MGU_max * thermal_derating_factor(Tbat_k)
+            When None, no thermal limiting is applied and the behaviour is
+            identical to the pre-thermal revision of this function, so
+            notebooks 01-03 keep their results unchanged. Regeneration is not
+            derated: the derating models the deploy-side thermal limit on the
+            MGU-K, consistent with the project README.
 
     Returns:
         tuple:
@@ -53,11 +63,17 @@ def MGU_K(P_mech_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt):
                 saturated at E_deploy_max.
             E_recharge_next (float): updated cumulative regenerated energy [J].
     """
-    P_MGU_max = params['P_MGU_max']
+    # Thermal derating of the deploy envelope. This is the single place where
+    # the battery temperature limits the power unit: putting it here (rather
+    # than inside battery_step) means the derated ceiling participates in the
+    # power balance, so any power it prevents from being delivered shows up in
+    # the shortfall returned by powertrain() instead of disappearing silently.
+    derate = 1.0 if Tbat_k is None else thermal_derating_factor(Tbat_k, params)
+
+    P_MGU_max = params['P_MGU_max'] * derate
     P_MGU_min = params['P_MGU_min']
     E_deploy_max = params['E_deploy_max']
     eta_MGU = params['eta_MGU']
-    
 
     # If the lap's deploy budget is already exhausted, no further boosting
     #    is allowed for the rest of the lap (permanent saturation).
@@ -93,7 +109,8 @@ def MGU_K(P_mech_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt):
 
     return P2, E_deploy_next, E_recharge_next
 
-def powertrain(P_gb_desired, control, E_deploy_acc_k, E_recharge_acc_k, params, dt,control_mode='u_split'):
+def powertrain(P_gb_desired, control, E_deploy_acc_k, E_recharge_acc_k, params, dt,
+               control_mode='u_split', Tbat_k=None):
     """
     Powertrain plant model: splits the requested wheel/gearbox power between
     the ICE and the MGU-K according to the controller's split decision,
@@ -111,6 +128,13 @@ def powertrain(P_gb_desired, control, E_deploy_acc_k, E_recharge_acc_k, params, 
             [J]. State variable, passed in from the previous timestep.
         params (dict)
         dt (float): timestep duration [s].
+        control_mode (str): 'u_split' -> `control` is the MGU-K fraction of
+            P_gb_desired; 'P2' -> `control` is the electrical power at the
+            battery terminals [W], which is the domain in which both the
+            350 kW regulatory limit and the per-lap deploy budget are defined.
+        Tbat_k (float or None): battery temperature [degC], forwarded to
+            MGU_K() for thermal derating of the deploy ceiling. None disables
+            thermal limiting (pre-thermal behaviour).
 
     Returns:
         tuple:
@@ -162,7 +186,9 @@ def powertrain(P_gb_desired, control, E_deploy_acc_k, E_recharge_acc_k, params, 
 
     # Pass the MGU-K's desired power through its own component model,
     # which enforces P_MGU_min/max and the per-lap deploy energy budget.
-    P2, E_deploy_next, E_recharge_next = MGU_K(P_mech_MGU_K_desired, E_deploy_acc_k, E_recharge_acc_k, params, dt)
+    P2, E_deploy_next, E_recharge_next = MGU_K(P_mech_MGU_K_desired, E_deploy_acc_k,
+                                               E_recharge_acc_k, params, dt,
+                                               Tbat_k=Tbat_k)
     # The mechanical power actually delivered/absorbed by the MGU-K is
     # recovered from P2 using the same direction-dependent efficiency as
     # inside MGU_K (needed here only for the power balance/shortfall check).

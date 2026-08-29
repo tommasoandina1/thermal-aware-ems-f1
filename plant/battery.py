@@ -18,6 +18,8 @@ Sign convention: P2 > 0 means the battery is discharging (delivering power to
 the MGU-K), P2 < 0 means the battery is charging (regenerative braking).
 """
 
+import warnings
+
 import numpy as np
 import matplotlib.pyplot as plt
 from .parameters import params
@@ -74,11 +76,21 @@ def battery_step(SoC_k, P2_k, coef, Tbat_k,params,dt):
     for the terminal voltage U2, then derives current and updates SoC via
     Coulomb counting.
 
+    Thermal limiting is NOT applied here. It belongs to the MGU-K / power
+    electronics envelope and is applied in powertrain.MGU_K(), where the
+    350 kW regulatory limit also lives. Earlier revisions of this function
+    multiplied the quantity below by thermal_derating_factor(); that was
+    inert in practice and hid the constraint from the power balance. See the
+    note on P2_max_solvable.
+
     Args:
         SoC_k (float): state of charge at the current timestep, in [0, 1].
         P2_k (float): requested battery terminal power [W].
             Positive = discharge, negative = charge (regenerative braking).
         coef (array-like): Uoc(SoC) polynomial fit coefficients.
+        Tbat_k (float): battery temperature [degC]. Retained in the signature
+            for call-site compatibility and for future temperature-dependent
+            R_int; it no longer affects the result.
         params (dict): must contain 'R_int' [Ohm] and 'Q_bat' [C].
         dt (float): timestep duration [s].
 
@@ -92,13 +104,32 @@ def battery_step(SoC_k, P2_k, coef, Tbat_k,params,dt):
     Uoc_k = Uoc(SoC_k, coef)
     R_int = params['R_int']
     Q_bat = params['E_pack_capacity'] /params['V_oc_nom'] 
-    # Maximum physically deliverable discharge power at this SoC/R_int
-    derating = thermal_derating_factor(Tbat_k, params)
-    P2_max = Uoc_k**2 /(4*R_int)*derating
-    if P2_k > P2_max:
-        P2_k =P2_max
 
-    U2_k = (Uoc_k + np.sqrt(Uoc_k**2 -4 * P2_k * R_int))/2
+    # Solvability guard, not a physical power limit. Uoc^2/(4 R_int) is the
+    # maximum-power-transfer point of the equivalent circuit, i.e. half the
+    # open-circuit voltage dropped across R_int (at 300 V that is a 150 V drop
+    # and roughly 15 kA). No pack operates anywhere near it; the quantity
+    # matters only because beyond it the quadratic
+    #     U2^2 - Uoc*U2 + P2*R_int = 0
+    # has a negative discriminant and U2 becomes complex. Reaching it means the
+    # caller failed to apply the component limits upstream, so it is reported
+    # rather than silently absorbed.
+    P2_max_solvable = Uoc_k**2 / (4*R_int)
+    if P2_k > P2_max_solvable:
+        warnings.warn(
+            f"battery_step: requested P2={P2_k/1e3:.1f} kW exceeds the "
+            f"equivalent-circuit solvability limit "
+            f"{P2_max_solvable/1e3:.1f} kW at SoC={SoC_k:.3f}. The MGU-K and "
+            f"battery limits should have been enforced upstream.",
+            RuntimeWarning, stacklevel=2)
+        P2_k = P2_max_solvable
+
+    # Clamp the discriminant at zero. After the guard above it is
+    # non-negative analytically, but at exactly the solvability limit rounding
+    # can push it a few ulp negative, which turns U2 into NaN and then
+    # propagates silently through the SoC integration.
+    disc = np.maximum(0.0, Uoc_k**2 - 4 * P2_k * R_int)
+    U2_k = (Uoc_k + np.sqrt(disc))/2
     I2_k = P2_k / U2_k
     dSoC = -I2_k * dt / Q_bat
 
@@ -125,9 +156,13 @@ def thermal_model(I2_k, Tbat_k, params, dt, cooling_factor=1.0):
 
 def thermal_derating_factor(Tbat_k, params):
     """
-    Returns a multiplicative factor in [0, 1] applied to the battery's
-    maximum deliverable power, linearly derated between T_bat_derate_start
-    (factor = 1) and T_bat_safe_max (factor = 0).
+    Returns a multiplicative factor in [0, 1] applied to the MGU-K maximum
+    discharge power, linearly derated between T_bat_derate_start (factor = 1)
+    and T_bat_safe_max (factor = 0).
+
+    The factor is consumed by powertrain.MGU_K(), which owns the deploy
+    envelope. It is exposed here because the battery temperature is the state
+    that drives it.
     """
     T_start = params['T_bat_derate_start']
     T_max = params['T_bat_safe_max']
