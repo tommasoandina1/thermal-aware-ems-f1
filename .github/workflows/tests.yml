@@ -1,0 +1,50 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # PyTorch is installed from the CPU-only index. The default PyPI wheel is
+      # the CUDA build: ~1.2 GB of torch plus ~2.7 GB of nvidia-* runtime
+      # packages, none of which a CI runner needs to exercise two small MLPs.
+      # --index-url replaces PyPI rather than adding to it, so this cannot be a
+      # line in a requirements file.
+      - name: Install PyTorch (CPU)
+        run: pip install --index-url https://download.pytorch.org/whl/cpu torch
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install -r requirements-rl.txt
+          pip install -r requirements-dev.txt
+
+      # Telemetry is not downloaded in CI: FastF1 hits an external service and
+      # would make the suite depend on network availability. The tests that
+      # need a velocity profile read the committed .npy under data/.
+      - name: Run tests
+        run: pytest tests -q
+
+      # Cheap end-to-end check that the RL layer still runs as a whole. Far too
+      # short to learn anything - the point is that the pipeline completes, not
+      # that the policy is any good.
+      - name: Smoke-test the RL pipeline
+        run: |
+          python scripts/run_rl_experiment.py \
+            --steps 2000 --profile single_lap --bc-epochs 3 \
+            --seeds 0 --out runs/ci
