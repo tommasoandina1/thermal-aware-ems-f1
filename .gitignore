@@ -7,3 +7,4 @@ runs/*/sac_[0-9]*.pt
 runs/*/bc_actor.pt
 runs/*/*.npz
 .DS_Store
+runs/

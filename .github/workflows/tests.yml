@@ -37,8 +37,11 @@ jobs:
       # Telemetry is not downloaded in CI: FastF1 hits an external service and
       # would make the suite depend on network availability. The tests that
       # need a velocity profile read the committed .npy under data/.
+      # `python -m pytest` rather than a bare `pytest`: the former puts the
+      # working directory on sys.path, the latter does not. conftest.py at the
+      # repository root makes both work, and this is the belt to its braces.
       - name: Run tests
-        run: pytest tests -q
+        run: python -m pytest tests -q
 
       # Cheap end-to-end check that the RL layer still runs as a whole. Far too
       # short to learn anything - the point is that the pipeline completes, not
