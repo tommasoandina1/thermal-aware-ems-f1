@@ -10,7 +10,7 @@ that has to decide without it.
 
 ![Summary of results](img/results_overview.png)
 
-[![tests](https://github.com/tommasoandina1/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain/actions/workflows/tests.yml/badge.svg)](https://github.com/tommasoandina1/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain/actions/workflows/tests.yml)
+
 
 
 |  |  |
