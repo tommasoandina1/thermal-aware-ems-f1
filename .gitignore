@@ -1,0 +1,9 @@
+f1_cache/
+scripts/f1_cache/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+runs/*/sac_[0-9]*.pt
+runs/*/bc_actor.pt
+runs/*/*.npz
+.DS_Store

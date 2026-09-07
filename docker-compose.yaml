@@ -1,0 +1,28 @@
+services:
+  jupyter-env:
+    build: .
+    ports:
+      - "8889:8888"
+    volumes:
+      # Qualsiasi .ipynb creato in Jupyter viene salvato sul Mac
+      - ./:/app
+      # Cache FastF1 fuori dal repo: named volume, non bind mount, così la
+      # telemetria scaricata non ricompare nella working tree e non finisce
+      # in git.
+      - fastf1-cache:/cache
+    environment:
+      - PYTHONPATH=/app
+      - FASTF1_CACHE=/cache
+      # Torch su CPU apre un thread per core. Dentro un container su Docker
+      # Desktop questo causa oversubscription e rallenta il training invece di
+      # accelerarlo. Allinealo ai core che hai davvero assegnato alla VM.
+      - OMP_NUM_THREADS=4
+      - MKL_NUM_THREADS=4
+    # Il training SAC tiene in memoria un replay buffer da 1e6 transizioni.
+    # Con obs a 13 componenti sono circa 250 MB, ma i default di Docker Desktop
+    # sul Mac sono stretti: se il container viene ucciso durante il training,
+    # alza la memoria assegnata a Docker Desktop prima di sospettare del codice.
+    shm_size: "1gb"
+
+volumes:
+  fastf1-cache:
