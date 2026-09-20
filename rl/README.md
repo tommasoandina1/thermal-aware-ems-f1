@@ -93,14 +93,15 @@ step.
 
 ## Two findings about the plant
 
-1. `plant/battery.py` applies the thermal derating factor to the *battery* power
-   ceiling `Uoc²/(4·R_int)`. With `R_int = 0.01 Ω` that ceiling is 1.8–3.0 MW
-   across the SoC window, so the derated value only drops below the 350 kW MGU-K
-   limit above roughly 58 °C — one degree short of the hard safety limit. As
-   coded, the derating is very nearly inert. The README describes the intent
-   differently and more plausibly (derating on MGU-K maximum discharge power);
-   `safety.py` implements that intent, which is what makes the thermal constraint
-   observable and binding at realistic temperatures.
+1. The thermal derating is applied to the MGU-K deploy envelope in
+   `powertrain.MGU_K()`, not to the battery power ceiling `Uoc²/(4·R_int)`.
+   That ceiling is 1.8–3.0 MW across the SoC window, so derating it only bites
+   above roughly 58 °C — one degree short of the hard safety limit, i.e. very
+   nearly inert. It is kept in `battery.py` as a solvability guard on the
+   quadratic for terminal voltage, which is what it actually is. Placing the
+   derating on the deploy envelope, where the 350 kW regulatory limit also
+   lives, is what makes the thermal constraint reach the power balance: power
+   the constraint forbids shows up as shortfall instead of disappearing.
 
 2. Running the rule-based controller inside `EMSEnv` reproduces the canonical
    figures (773.5 g, 2.02 MJ, `SoC_f` 0.5417) to within ~1%, which validates the

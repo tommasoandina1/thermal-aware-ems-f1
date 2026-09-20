@@ -27,7 +27,7 @@ P_gb = np.zeros(len(v))
 for k in range(len(v)):
     F_x[k],Pm[k],P_gb[k] = longitudinal_dynamics(v[k],a[k],params)
 
-np.save('data/qualifying_Canada/power_domand_quali.npy',np.stack([Pm, P_gb]))
+np.save('data/qualifying_Canada/power_demand_quali.npy',np.stack([Pm, P_gb]))
 
 ## 5 laps
 data_5_laps = np.load('data/multi_lap_Canada/Canada_5laps.npy')
@@ -48,7 +48,7 @@ P_gb_5_laps = np.zeros(len(vel_5_lap))
 for k in range(len(vel_5_lap)):
     F_x_5_laps[k],Pm_5_laps[k],P_gb_5_laps[k] = longitudinal_dynamics(vel_5_lap[k],a_5_lap[k],params)
 
-np.save('data/multi_lap_Canada/power_domand_multilap.npy',np.stack([Pm_5_laps, P_gb_5_laps]))
+np.save('data/multi_lap_Canada/power_demand_multilap.npy',np.stack([Pm_5_laps, P_gb_5_laps]))
 
 
 
@@ -67,4 +67,4 @@ plt.ylabel('Power (W)',fontsize = 16)
 plt.xlabel('Time (s)',fontsize = 16)
 plt.tight_layout()
 plt.title('Power Domand at Gearbox for 5 laps',fontsize = 16)
-plt.savefig('/app/img/multi_lap_powerdomand.png', dpi=300, bbox_inches='tight')
+plt.savefig('/app/img/multi_lap_power_demand.png', dpi=300, bbox_inches='tight')

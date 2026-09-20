@@ -1,10 +1,21 @@
+# FastF1 telemetry cache — lives outside the repo (see paths.py)
 f1_cache/
 scripts/f1_cache/
+
+# Python
 __pycache__/
 *.pyc
+.venv/
+venv/
+
+# Notebooks
 .ipynb_checkpoints/
-runs/*/sac_[0-9]*.pt
-runs/*/bc_actor.pt
-runs/*/*.npz
-.DS_Store
+
+# RL training artefacts: checkpoints and logs stay local.
+# Final metrics are exported to data/results/rl_comparison.npz, which is tracked.
 runs/
+*.pt
+*.pth
+
+# macOS
+.DS_Store

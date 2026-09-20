@@ -74,8 +74,8 @@ become visible once the model is honest enough to show them.
   reached.
 - **Closing the loop recovers feasibility.** Under degraded cooling, iterating
   between the optimal policy and the thermal model until they agree (11
-  iterations, 10.37 → 0.29 °C residual) takes unmet demand from 12.12 MJ to
-  0.11 MJ for 2.9% more fuel — without promoting temperature to a third state
+  iterations, 10.37 → 0.29 °C residual) takes the energy the policy demands
+  beyond the derated MGU-K ceiling from 12.12 MJ to 0.11 MJ for 2.9% more fuel — without promoting temperature to a third state
   variable.
 
 Every number above is reproduced, with the reasoning behind it, in
@@ -84,8 +84,8 @@ Every number above is reproduced, with the reasoning behind it, in
 ## Quickstart
 
 ```bash
-git clone https://github.com/tommasoandina1/Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain
-cd Thermal-Aware-Energy-Management-System-for-a-Hybrid-Motorsport-Powertrain
+git clone https://github.com/tommasoandina1/thermal-aware-ems-f1
+cd thermal-aware-ems-f1
 
 docker compose build
 docker compose run --rm jupyter-env pytest tests -q     # 34 tests
@@ -193,17 +193,17 @@ differentiation).
 ├── rl/                  # SAC energy management: env, safety layer, agent, baselines
 ├── scripts/             # telemetry -> velocity profile -> power demand -> figures
 ├── tests/               # 34 pytest checks on the plant model and the RL layer
-├── docs/                # design rationale, study guide, thermal-derating fix
+├── docs/                # design rationale for the RL layer
 ├── data/                # inputs and exported results (.npy / .npz)
 ├── img/                 # exported figures
 ├── paths.py             # single source of truth for every path
-└── Compare_Controllers.ipynb
+└── Compare_Controllers.ipynb   # runs from the root: imports both plant/ and controller/
 ```
 
 The reasoning behind every design decision in the RL layer — the choice of state
 and action, why the constraints live in the admissible set rather than in the
 reward, the gram-equivalent reward units and their derivations — is documented
-in [`docs/SCELTE_RL.md`](docs/SCELTE_RL.md) *(in Italian)*.
+in [`docs/rl_design_rationale.md`](docs/rl_design_rationale.md) *(in Italian)*.
 
 ## Scope and honest limitations
 
