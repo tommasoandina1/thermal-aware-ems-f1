@@ -193,17 +193,11 @@ differentiation).
 ├── rl/                  # SAC energy management: env, safety layer, agent, baselines
 ├── scripts/             # telemetry -> velocity profile -> power demand -> figures
 ├── tests/               # 34 pytest checks on the plant model and the RL layer
-├── docs/                # design rationale for the RL layer
 ├── data/                # inputs and exported results (.npy / .npz)
 ├── img/                 # exported figures
 ├── paths.py             # single source of truth for every path
 └── Compare_Controllers.ipynb   # runs from the root: imports both plant/ and controller/
 ```
-
-The reasoning behind every design decision in the RL layer — the choice of state
-and action, why the constraints live in the admissible set rather than in the
-reward, the gram-equivalent reward units and their derivations — is documented
-in [`docs/rl_design_rationale.md`](docs/rl_design_rationale.md) *(in Italian)*.
 
 ## Scope and honest limitations
 
